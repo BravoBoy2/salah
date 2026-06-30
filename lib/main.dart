@@ -1,5 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:salah/screen/home-screen.dart';
 
 void main() {
   runApp(const SalahApp());
@@ -11,22 +13,7 @@ class SalahApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        textTheme: GoogleFonts.juliusSansOneTextTheme()
-      ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Center(
-            child: Text('Salah App'),
-          ),
-        ),
-        body: Center(
-          child: 
-          Text('Salah Name goes here...'),
-        ) ,
-      ),
-    );
+    return HomeScreen();
   }
 }
 
