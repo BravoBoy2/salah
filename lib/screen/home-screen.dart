@@ -76,6 +76,7 @@ class HomeScreen extends StatelessWidget {
                     'Start Time',
                   style: TextStyle(
                     color: Colors.blueAccent,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 2,
                     fontSize: 14,
                   ),
@@ -97,6 +98,7 @@ class HomeScreen extends StatelessWidget {
                       'Time Left',
                       style: TextStyle(
                         color: Colors.redAccent,
+                      fontWeight: FontWeight.w600,
                       letterSpacing: 2,
                         fontSize: 14
                       ),
@@ -125,10 +127,10 @@ class HomeScreen extends StatelessWidget {
   Widget _buildTimeCard(String time) {
   return Container(
     width: double.infinity,
-    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
     decoration: BoxDecoration(
-      color: Colors.grey,
-        borderRadius: BorderRadius.circular(20)
+      color: Colors.purple,
+        borderRadius: BorderRadius.circular(25)
     ),
 
     child: Center(
@@ -155,9 +157,9 @@ class HomeScreen extends StatelessWidget {
     return Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 500),
-      padding: EdgeInsets.symmetric(),
+      padding: EdgeInsets.symmetric(horizontal: 10),
       child: Container(
-        padding: const EdgeInsets.symmetric(),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -167,8 +169,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             for(final salah in salahList())...[
               _buildSalahRow(salah, '06:32:40 PM'),
-              if (salah != salahList().last)
-                const Divider(height: 1,color: Colors.black12,thickness: 0.5),
+
             ]
           ],
         ),
@@ -185,16 +186,19 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildSalahRow(Salah salah, String time){
     return Padding(
-        padding: const EdgeInsets.symmetric(),
+        padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          Text(salah.displaySalahName,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black38
+          Padding(padding: EdgeInsets.symmetric(),
+          child: Text(salah.displaySalahName,
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black
+            ),
           ),
           ),
+
 
           const Spacer(),
 
@@ -202,7 +206,7 @@ class HomeScreen extends StatelessWidget {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black38
+            color: Colors.black
           ),
           )
 
