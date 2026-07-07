@@ -1,11 +1,13 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:salah/models/salah.dart';
 
 class HomeScreen extends StatelessWidget {
 
+
   const HomeScreen({super.key});
+
+  final String appTitle = "Salah App";
 
   @override
   Widget build(BuildContext context) {
@@ -13,54 +15,32 @@ class HomeScreen extends StatelessWidget {
 
     final salahName = Salah.asr.name; // temporary
 
-    return MaterialApp(
-      theme: ThemeData(
-          textTheme: GoogleFonts.juliusSansOneTextTheme()
-      ),
-      home: Scaffold(
-          appBar: AppBar(
-            title: Center(
-              child: Text('Salah App',
-              style: TextStyle(
-                fontSize: 32,
-                letterSpacing: 32 * 0.17,
-                color: Color(0xFF32BB56),
-              ),
+    return Focus(
+        autofocus: true,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(salahName),
+                ),
               ),
             ),
-          ),
-          body: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-            child: Center(
-          child: Padding(
-              padding: EdgeInsets.all(16),
-        child: Text('${salahName}',
-          style: TextStyle(
-              fontSize: 20,
-              letterSpacing: 20 * 0.17
-          ),
-        ),
-      )
+
+            SliverToBoxAdapter(
+              child: _salahTime(context),
             ),
 
-    ),
-              SliverToBoxAdapter(
-                child: _salahTime()
-              ),
-              SliverFillRemaining(
-                  child: _upcomingSalah()
-              ),
-            ],
-          )
-
-
-      ),
+            SliverFillRemaining(
+              child: _upcomingSalah(context),
+            )
+          ],
+        )
     );
-
   }
 
-  Widget _salahTime(){
+  Widget _salahTime(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 500),
       padding: EdgeInsets.all(8),
@@ -83,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                 ),
 
                   const SizedBox(height: 8),
-                  _buildTimeCard('04:32:40 PM'), //Temporary placement
+                  _buildTimeCard(context, '04:32:40 PM'), //Temporary placement
           ],
             ),
             ),
@@ -105,7 +85,8 @@ class HomeScreen extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 8),
-                    _buildTimeCard('05:32:40 PM'), //Temporary placement
+                    _buildTimeCard(context, '05:32:40 PM'),
+                    //Temporary placement
                   ],
                 ),
             ),
@@ -124,12 +105,15 @@ class HomeScreen extends StatelessWidget {
 
    */
 
-  Widget _buildTimeCard(String time) {
+  Widget _buildTimeCard(BuildContext context, String time) {
   return Container(
     width: double.infinity,
     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
     decoration: BoxDecoration(
-      color: Colors.purple,
+        color: Theme
+            .of(context)
+            .colorScheme
+            .onSecondary,
         borderRadius: BorderRadius.circular(25)
     ),
 
@@ -138,8 +122,14 @@ class HomeScreen extends StatelessWidget {
           time,
         style: GoogleFonts.montserrat(
           fontWeight: FontWeight.bold,
-          fontSize: 15,
-          color: Colors.black87
+            textStyle: Theme
+                .of(context)
+                .textTheme
+                .bodyMedium,
+            color: Theme
+                .of(context)
+                .colorScheme
+                .onSurface
         ),
       ),
     ),
@@ -152,8 +142,10 @@ class HomeScreen extends StatelessWidget {
 
    */
 
-  Widget _upcomingSalah(){
+  Widget _upcomingSalah(BuildContext context) {
      List<Salah> salahList() => Salah.values;
+
+     final theme = Theme.of(context);
     return Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 500),
@@ -162,13 +154,14 @@ class HomeScreen extends StatelessWidget {
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
+            color: theme.colorScheme.surfaceContainer
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
 
           children: [
             for(final salah in salahList())...[
-              _buildSalahRow(salah, '06:32:40 PM'),
+              _buildSalahRow(context, salah, '06:32:40 PM'),
 
             ]
           ],
@@ -184,17 +177,19 @@ class HomeScreen extends StatelessWidget {
   Shows a list of salahs with their times and names
    */
 
-  Widget _buildSalahRow(Salah salah, String time){
+  Widget _buildSalahRow(BuildContext context, Salah salah, String time) {
+    final theme = Theme.of(context);
+
     return Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
           Padding(padding: EdgeInsets.symmetric(),
           child: Text(salah.displaySalahName,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: Colors.black
+                color: theme.colorScheme.onSurfaceVariant
             ),
           ),
           ),
@@ -203,10 +198,10 @@ class HomeScreen extends StatelessWidget {
           const Spacer(),
 
           Text(time,
-          style: const TextStyle(
+            style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Colors.black
+                color: theme.colorScheme.onSurfaceVariant
           ),
           )
 
