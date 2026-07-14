@@ -1,7 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:salah/screen/adaptive-screens.dart';
+import 'package:salah/screen/adaptive_screens.dart';
+import 'package:salah/theme/theme.dart';
 
 
 void main() {
@@ -12,36 +12,20 @@ class SalahApp extends StatelessWidget {
 
   const SalahApp({super.key});
 
+
   @override
   Widget build(BuildContext context) {
-    final fallbackColorScheme = ColorScheme.fromSeed(
-        seedColor: const Color(0xFF32BB56));
-
-    return DynamicColorBuilder(
-
-        builder: (ColorScheme? lighDynamic, ColorScheme? darkDynamic) {
-          return MaterialApp(
-            title: 'Salah App',
-            themeMode: ThemeMode.system,
-
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: lighDynamic ?? fallbackColorScheme,
-              textTheme: GoogleFonts.juliusSansOneTextTheme(),
-            ),
-
-
-            darkTheme: ThemeData(
-              useMaterial3: true,
-              colorScheme: darkDynamic ?? ColorScheme.fromSeed(
-                  seedColor: const Color(0xFF32BB56),
-                  brightness: Brightness.dark),
-              textTheme: GoogleFonts.juliusSansOneTextTheme(),
-            ),
-            home: const AdaptiveScreens(),
-          );
-  }
-    );
+   return DynamicColorBuilder(
+       builder: (lightDynamic, darkDynamic) {
+       return MaterialApp(
+         title: 'Salah',
+         themeMode: ThemeMode.system,
+         theme: SalahTheme.light(lightDynamic),
+         darkTheme: SalahTheme.dark(darkDynamic),
+         home: AdaptiveScreens(),
+       ) ;
+       }
+       );
 }
 
 

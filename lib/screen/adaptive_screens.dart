@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:salah/screen/navigation-layout.dart';
+import 'package:salah/screen/navigation_layout.dart';
 
 const largeScreenMinWidth = 600;
 
