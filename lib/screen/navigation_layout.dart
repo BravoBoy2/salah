@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:salah/screen/settings/settings_page.dart';
+
 import 'home_screen.dart';
 import 'import_timetable.dart';
 
@@ -25,7 +26,7 @@ class _NavigationLayoutState extends State<NavigationLayout> {
         key: ValueKey('placement_page'),
         body: Center(child: Text('Placement')),
       ),
-    const ImportTimeTable(key: ValueKey('Import Timetable')),
+      ImportTimeTable(key: ValueKey('Import Timetable')),
     ];
 
     return Scaffold(

@@ -29,6 +29,9 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   adhan: ^2.0.0+1
+  csv: ^8.0.0
+  drift: ^2.34.2
+  drift_flutter: ^0.3.1
   dynamic_color: ^1.8.1
   flutter:
     sdk: flutter
@@ -36,6 +39,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   google_fonts: ^8.1.0
+  google_mlkit_text_recognition: ^0.16.0
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:
@@ -47,6 +52,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  drift_dev: ^2.34.4
+  build_runner: ^2.15.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
