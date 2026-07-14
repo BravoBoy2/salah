@@ -10,10 +10,7 @@ enum Salah {
 
   const Salah(this.displaySalahName);
 
-
-
-
-  get currentSalah{
+  void get currentSalah {
     //TODO: fetching the current salah name
   }
 
