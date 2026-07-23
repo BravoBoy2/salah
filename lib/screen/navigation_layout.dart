@@ -64,7 +64,7 @@ class _NavigationLayoutState extends State<NavigationLayout> {
           ),
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           NavigationDestination(icon: Icon(Icons.place), label: 'Placement'),
-          NavigationDestination(icon: Icon(Icons.import_export), label: 'Import Timetable')
+          NavigationDestination(icon: Icon(Icons.import_export), label: 'Import Time')
         ],
       ),
     );

@@ -1,10 +1,17 @@
 import 'dart:io';
+import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:salah/Database/app_database.dart';
 import 'package:salah/Services/time_parser.dart';
 
 class ImportTimetableService {
+
+  final AppDatabase db;
+
+  ImportTimetableService(this.db);
+
   // 1. handleImport must be marked 'async' to allow 'await' inside it
   void handleImport(File file, String fileType) async {
     List<TimetableEntry> results = [];
@@ -12,20 +19,20 @@ class ImportTimetableService {
 
     if (fileType == 'csv') {
       String content = await file.readAsString();
-      results = UnstructuredParser.parseCSV(content, selectedDate);
+      results = await compute((String data)=> UnstructuredParser.parseCSV(data, selectedDate), content);
     } else if (fileType == 'txt') {
       String content = await file.readAsString();
-      results = UnstructuredParser.parseRawText(content, selectedDate);
+      results = await compute((String data)=> UnstructuredParser.parseRawText(data, selectedDate), content);
     } else if (fileType == 'image') {
       // Process with Google ML Kit
       final inputImage = InputImage.fromFile(file);
       final textRecognizer = TextRecognizer();
-      final RecognizedText recognizedText = await textRecognizer.processImage(
-        inputImage,
-      );
+      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
 
+
+      
       // Pass to our spatial alignment parser
-      results = SpatialOcrParser.parseOcrBlocks(recognizedText, selectedDate);
+      results = await Isolate.run(()=> SpatialOcrParser.parseOcrBlocks(recognizedText, selectedDate));
       textRecognizer.close();
     }
 
@@ -47,6 +54,24 @@ class ImportTimetableService {
       print("Failed to save salah times to database: $e");
     } finally {
       await database.close();
+    }
+  }
+
+  Future<bool> importFromRawData(String rawString) async {
+    try {
+      final List<SalahTimeTablesCompanion> entries = TimeParser.parse(rawString);
+      if(entries.isEmpty) return false;
+
+      await db.transaction(() async {
+        for(final entry in entries){
+          await db.into(db.salahTimeTables).insertOnConflictUpdate(entry);
+        }
+      });
+
+      return true;
+    } catch(e){
+      print('Error importing timetable: $e');
+      return false;
     }
   }
 }

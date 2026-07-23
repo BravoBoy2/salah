@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:csv/csv.dart';
+import 'package:drift/drift.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:salah/Database/app_database.dart';
 import 'package:salah/Services/import_timetable_service.dart';
 
 class UnstructuredParser {
@@ -102,7 +106,7 @@ class UnstructuredParser {
     final isPM = rawTime.contains('PM');
     final isAM = rawTime.contains('AM');
 
-    final digitsOnly = rawTime.replaceAll(RegExp(r'[0-9:]'), '');
+    // final digitsOnly = rawTime.replaceAll(RegExp(r'[0-9:]'), '');
     final timeParts = rawTime.split(':');
     if (timeParts.length != 2) return rawTime;
 
@@ -202,4 +206,31 @@ class OcrElement {
     required this.y,
     required this.height,
   });
+}
+
+class TimeParser {
+  static List<SalahTimeTablesCompanion> parse(String rawString) {
+    final List<SalahTimeTablesCompanion> companions = [];
+
+    try {
+      final decoded = jsonDecode(rawString);
+
+      if (decoded is List) {
+        for (final item in decoded) {
+          companions.add(
+            SalahTimeTablesCompanion(
+              salahName: Value(item['salahName'] ?? 'Unknown'),
+              date: Value(
+                DateTime.tryParse(item('date') ?? '') ?? DateTime.now(),
+              ),
+              timeString: Value(item['timeString'] ?? '00:00'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Parser error: $e');
+    }
+    return companions;
+  }
 }
