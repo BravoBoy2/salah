@@ -38,4 +38,15 @@ class SalahApiService {
       throw Exception('Failed to fetch timetable: ${response.body}');
     }
   }
+
+  static Future<Map<String, dynamic>> fetchCurrentSalah() async {
+    final uri = Uri.http(_authority, '/api/v1/current-salah');
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch current salah: ${response.body}');
+    }
+  }
 }

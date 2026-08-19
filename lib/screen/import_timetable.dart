@@ -27,14 +27,14 @@ class _ImportTimeTableState extends State<ImportTimeTable> {
     });
 
     try {
-      // 1. Call the static method directly on the class
-      final FilePickerResult? result = await FilePicker.pickFiles(
+      // 1. Use FilePicker.pickFile() for single-file selection (v12 API)
+      final PlatformFile? pickedFile = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['csv', 'pdf', 'jpg', 'jpeg', 'png'],
       );
 
-      // If null, user closed the picker dialog
-      if (result == null || result.files.isEmpty) {
+      // If null, user closed/cancelled the picker dialog
+      if (pickedFile == null) {
         setState(() {
           _status.isProcessing = false;
           _status.statusMessage = "Import Cancelled";
@@ -46,29 +46,30 @@ class _ImportTimeTableState extends State<ImportTimeTable> {
         _status.statusMessage = "Processing and parsing file...";
       });
 
-      // 2. Grab the picked file metadata
-      final PlatformFile pickedFile = result.files.first;
-
-      if (pickedFile.path == null) {
-        throw Exception("Could not resolve local file path.");
+      // 2. Read string contents securely (cross-platform safe)
+      String fileContent = '';
+      if (pickedFile.path != null) {
+        final File file = File(pickedFile.path!);
+        fileContent = await file.readAsString();
+      } else {
+        // Fallback using v12 readAsBytes() if path resolution isn't available
+        final bytes = await pickedFile.readAsBytes();
+        fileContent = String.fromCharCodes(bytes);
       }
 
-      // Create a native dart:io File from the string path
-      final File file = File(pickedFile.path!);
-      final String fileContent = await file.readAsString();
+      // Determine the extension format cleanly from file name
+      final extension = pickedFile.name.contains('.')
+          ? pickedFile.name.split('.').last.toLowerCase()
+          : '';
 
-      // Determine the extension format cleanly
       String fileType = 'csv';
-      final lowerName = (pickedFile.extension ?? '').toLowerCase();
-      if (lowerName == 'pdf') {
+      if (extension == 'pdf') {
         fileType = 'pdf';
-      } else if (lowerName == 'jpg' ||
-          lowerName == 'jpeg' ||
-          lowerName == 'png') {
+      } else if (['jpg', 'jpeg', 'png'].contains(extension)) {
         fileType = 'image';
       }
 
-      // 3. Send raw string contents straight to your custom parser
+      // 4. Send raw contents to custom parser
       await handleImportFromContent(fileContent, fileType);
 
       setState(() {

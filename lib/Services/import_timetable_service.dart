@@ -14,42 +14,36 @@ class ImportTimetableService {
 
   /// Main entry point for processing a picked file
   Future<bool> processPickedFile(PlatformFile pickedFile) async {
-    final lowerName = (pickedFile.extension ?? '').toLowerCase();
-    DateTime selectedDate = DateTime.now();
+    // Standardized extension check for file_picker v12
+    final extension = pickedFile.name.contains('.')
+        ? pickedFile.name.split('.').last.toLowerCase()
+        : '';
+
+    final DateTime selectedDate = DateTime.now();
     List<TimetableEntry> results = [];
 
-    // --- 1. CSV Processing ---
-    if (lowerName == 'csv') {
-      String content = '';
-      if (kIsWeb || pickedFile.bytes != null) {
-        content = utf8.decode(pickedFile.bytes!);
-      } else if (pickedFile.path != null) {
-        content = await File(pickedFile.path!).readAsString();
-      }
+    // --- 1. CSV & TXT File Processing ---
+    if (extension == 'csv' || extension == 'txt') {
+      final String content = await _readFileContentAsString(pickedFile);
 
-      results = await compute(
-            (String data) => UnstructuredParser.parseCSV(data, selectedDate),
-        content,
-      );
-    }
-    // --- 2. Text File Processing ---
-    else if (lowerName == 'txt') {
-      String content = '';
-      if (kIsWeb || pickedFile.bytes != null) {
-        content = utf8.decode(pickedFile.bytes!);
-      } else if (pickedFile.path != null) {
-        content = await File(pickedFile.path!).readAsString();
+      if (extension == 'csv') {
+        results = await compute(
+          (String data) => UnstructuredParser.parseCSV(data, selectedDate),
+          content,
+        );
+      } else {
+        results = await compute(
+          (String data) => UnstructuredParser.parseRawText(data, selectedDate),
+          content,
+        );
       }
-
-      results = await compute(
-            (String data) => UnstructuredParser.parseRawText(data, selectedDate),
-        content,
-      );
     }
-    // --- 3. Image OCR Processing (Native Only) ---
-    else if (['jpg', 'jpeg', 'png'].contains(lowerName)) {
+    // --- 2. Image OCR Processing (Native Only) ---
+    else if (['jpg', 'jpeg', 'png'].contains(extension)) {
       if (kIsWeb) {
-        throw UnsupportedError("ML Kit OCR image parsing is not supported on Web.");
+        throw UnsupportedError(
+          "ML Kit OCR image parsing is not supported on Web.",
+        );
       }
 
       if (pickedFile.path == null) {
@@ -60,8 +54,9 @@ class ImportTimetableService {
       final textRecognizer = TextRecognizer();
 
       try {
-        final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
-        // Process directly on the main isolate to avoid object serialization issues across Isolates
+        final RecognizedText recognizedText = await textRecognizer.processImage(
+          inputImage,
+        );
         results = SpatialOcrParser.parseOcrBlocks(recognizedText, selectedDate);
       } finally {
         await textRecognizer.close();
@@ -77,24 +72,38 @@ class ImportTimetableService {
     return false;
   }
 
+  /// Helper to safely extract string contents using file_picker v12 APIs
+  Future<String> _readFileContentAsString(PlatformFile pickedFile) async {
+    if (!kIsWeb && pickedFile.path != null) {
+      return await File(pickedFile.path!).readAsString();
+    }
+
+    // v12 Async readAsBytes method replacing the old .bytes getter
+    final Uint8List bytes = await pickedFile.readAsBytes();
+    return utf8.decode(bytes);
+  }
+
   /// Save extracted TimetableEntry list using the injected database instance
   Future<void> saveEntriesToDatabase(List<TimetableEntry> entries) async {
     if (entries.isEmpty) return;
 
     try {
       await db.saveTimetableEntries(entries);
-      print("Successfully saved ${entries.length} timetable entries to database.");
+      print(
+        "Successfully saved ${entries.length} timetable entries to database.",
+      );
     } catch (e) {
       print("Failed to save entries to database: $e");
       rethrow;
     }
-    // DO NOT close db here; it's managed at the app level.
   }
 
   /// Raw String Importer
   Future<bool> importFromRawData(String rawString) async {
     try {
-      final List<SalahTimeTablesCompanion> entries = TimeParser.parse(rawString);
+      final List<SalahTimeTablesCompanion> entries = TimeParser.parse(
+        rawString,
+      );
       if (entries.isEmpty) return false;
 
       await db.transaction(() async {
