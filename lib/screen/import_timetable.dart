@@ -27,13 +27,11 @@ class _ImportTimeTableState extends State<ImportTimeTable> {
     });
 
     try {
-      // 1. Use FilePicker.pickFile() for single-file selection (v12 API)
+      // CHANGE THIS: Use FileType.any instead of FileType.custom
       final PlatformFile? pickedFile = await FilePicker.pickFile(
-        type: FileType.custom,
-        allowedExtensions: ['csv', 'pdf', 'jpg', 'jpeg', 'png'],
+        type: FileType.any,
       );
 
-      // If null, user closed/cancelled the picker dialog
       if (pickedFile == null) {
         setState(() {
           _status.isProcessing = false;

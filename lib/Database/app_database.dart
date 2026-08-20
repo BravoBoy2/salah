@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
         // Use lowercase "s" for 'salahTimeTables' here
         await into(salahTimeTables).insert(
           SalahTimeTablesCompanion.insert(
-            salahName: entry.prayerName,
+            salahName: entry.salahName,
             date: entry.date,
             timeString: entry.timeString,
           ),

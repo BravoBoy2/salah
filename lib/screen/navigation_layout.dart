@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:salah/screen/settings/settings_page.dart';
+import 'package:salah/screen/timetable_sliver.dart';
 
+import '../Database/app_database.dart';
 import 'home_screen.dart';
 import 'import_timetable.dart';
 
@@ -13,6 +15,7 @@ class NavigationLayout extends StatefulWidget {
 
 class _NavigationLayoutState extends State<NavigationLayout> {
   int _currentIndex = 0;
+  final AppDatabase dbInstance = AppDatabase();
 
   // TODO: implement rest of the Navigation system
 
@@ -22,10 +25,7 @@ class _NavigationLayoutState extends State<NavigationLayout> {
     final List<Widget> pages = [
       const HomeScreen(key: ValueKey('home_page')),
       const SettingsPage(key: ValueKey('settings')),
-      const Scaffold(
-        key: ValueKey('placement_page'),
-        body: Center(child: Text('Placement')),
-      ),
+      TimetableSliverView(db: dbInstance),
       ImportTimeTable(key: ValueKey('Import Timetable')),
     ];
 
@@ -36,7 +36,7 @@ class _NavigationLayoutState extends State<NavigationLayout> {
           style: TextStyle(
             fontSize: 32,
             letterSpacing: 32 * 0.17,
-            color: Color(0xFF32BB56) // Your signature brand green color
+            color: Color(0xFF32BB56), // Your signature brand green color
           ),
         ),
         centerTitle: true,
@@ -64,7 +64,10 @@ class _NavigationLayoutState extends State<NavigationLayout> {
           ),
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           NavigationDestination(icon: Icon(Icons.place), label: 'Placement'),
-          NavigationDestination(icon: Icon(Icons.import_export), label: 'Import Time')
+          NavigationDestination(
+            icon: Icon(Icons.import_export),
+            label: 'Import Time',
+          ),
         ],
       ),
     );

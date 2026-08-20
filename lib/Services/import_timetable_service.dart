@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:salah/Database/app_database.dart';
 import 'package:salah/Services/time_parser.dart';
 
@@ -12,61 +11,51 @@ class ImportTimetableService {
 
   ImportTimetableService(this.db);
 
-  /// Main entry point for processing a picked file
   Future<bool> processPickedFile(PlatformFile pickedFile) async {
-    // Standardized extension check for file_picker v12
     final extension = pickedFile.name.contains('.')
         ? pickedFile.name.split('.').last.toLowerCase()
         : '';
 
+    print("DEBUG: Picked file name: ${pickedFile.name}");
+    print("DEBUG: File extension detected: $extension");
+
     final DateTime selectedDate = DateTime.now();
     List<TimetableEntry> results = [];
 
-    // --- 1. CSV & TXT File Processing ---
     if (extension == 'csv' || extension == 'txt') {
-      final String content = await _readFileContentAsString(pickedFile);
-
-      if (extension == 'csv') {
-        results = await compute(
-          (String data) => UnstructuredParser.parseCSV(data, selectedDate),
-          content,
-        );
-      } else {
-        results = await compute(
-          (String data) => UnstructuredParser.parseRawText(data, selectedDate),
-          content,
-        );
-      }
-    }
-    // --- 2. Image OCR Processing (Native Only) ---
-    else if (['jpg', 'jpeg', 'png'].contains(extension)) {
-      if (kIsWeb) {
-        throw UnsupportedError(
-          "ML Kit OCR image parsing is not supported on Web.",
-        );
-      }
-
-      if (pickedFile.path == null) {
-        throw Exception("File path required for ML Kit image processing.");
-      }
-
-      final inputImage = InputImage.fromFilePath(pickedFile.path!);
-      final textRecognizer = TextRecognizer();
-
       try {
-        final RecognizedText recognizedText = await textRecognizer.processImage(
-          inputImage,
-        );
-        results = SpatialOcrParser.parseOcrBlocks(recognizedText, selectedDate);
-      } finally {
-        await textRecognizer.close();
+        final String content = await _readFileContentAsString(pickedFile);
+        print("DEBUG: File raw content length: ${content.length} characters");
+
+        if (extension == 'csv') {
+          print("DEBUG: Sending content to UnstructuredParser.parseCSV...");
+          results = await compute(
+            (String data) => UnstructuredParser.parseCSV(data, selectedDate),
+            content,
+          );
+        } else {
+          results = await compute(
+            (String data) =>
+                UnstructuredParser.parseRawText(data, selectedDate),
+            content,
+          );
+        }
+
+        print("DEBUG: Parsing complete. Extracted ${results.length} entries.");
+      } catch (e, stack) {
+        print("DEBUG ERROR during file reading or parsing: $e");
+        print("STACK TRACE: $stack");
+        return false;
       }
     }
 
     // Save extracted results to database
     if (results.isNotEmpty) {
+      print("DEBUG: Calling saveEntriesToDatabase...");
       await saveEntriesToDatabase(results);
       return true;
+    } else {
+      print("DEBUG: 'results' was empty. Nothing saved to database.");
     }
 
     return false;
@@ -92,6 +81,18 @@ class ImportTimetableService {
       print(
         "Successfully saved ${entries.length} timetable entries to database.",
       );
+
+      // --- DATABASE VERIFICATION LOGS ---
+      final allEntries = await db.select(db.salahTimeTables).get();
+      print("================ DATABASE VERIFICATION ================");
+      print("Total records currently stored in SQLite: ${allEntries.length}");
+      print("First 5 stored entries:");
+      for (var entry in allEntries.take(5)) {
+        print(
+          " -> ${entry.salahName} | Date: ${entry.date} | Time: ${entry.timeString}",
+        );
+      }
+      print("=======================================================");
     } catch (e) {
       print("Failed to save entries to database: $e");
       rethrow;
@@ -111,6 +112,12 @@ class ImportTimetableService {
           await db.into(db.salahTimeTables).insertOnConflictUpdate(entry);
         }
       });
+
+      // Verification log for raw string imports
+      final totalCount = await db.select(db.salahTimeTables).get();
+      print(
+        "Import success. Current total entries in DB: ${totalCount.length}",
+      );
 
       return true;
     } catch (e) {
