@@ -16,15 +16,57 @@ class SalahTheme {
   );
 
   /// Master builder for Light Themes
-  static ThemeData light(ColorScheme? dynamicColors) {
+  static ThemeData light([ColorScheme? dynamicColors]) {
     final scheme = dynamicColors ?? _lightFallback;
     return _buildTheme(scheme, Brightness.light);
   }
 
   /// Master builder for Dark Themes
-  static ThemeData dark(ColorScheme? dynamicColors) {
+  static ThemeData dark([ColorScheme? dynamicColors]) {
     final scheme = dynamicColors ?? _darkFallback;
     return _buildTheme(scheme, Brightness.dark);
+  }
+
+  /// Converts a dynamic ColorScheme (e.g. from material_ui) to a Flutter ColorScheme
+  static ColorScheme? convertDynamicColorScheme(dynamic scheme) {
+    if (scheme == null) return null;
+    try {
+      return ColorScheme(
+        brightness: scheme.brightness == Brightness.dark
+            ? Brightness.dark
+            : Brightness.light,
+        primary: Color(scheme.primary.value),
+        onPrimary: Color(scheme.onPrimary.value),
+        primaryContainer: Color(scheme.primaryContainer.value),
+        onPrimaryContainer: Color(scheme.onPrimaryContainer.value),
+        secondary: Color(scheme.secondary.value),
+        onSecondary: Color(scheme.onSecondary.value),
+        secondaryContainer: Color(scheme.secondaryContainer.value),
+        onSecondaryContainer: Color(scheme.onSecondaryContainer.value),
+        tertiary: Color(scheme.tertiary.value),
+        onTertiary: Color(scheme.onTertiary.value),
+        tertiaryContainer: Color(scheme.tertiaryContainer.value),
+        onTertiaryContainer: Color(scheme.onTertiaryContainer.value),
+        error: Color(scheme.error.value),
+        onError: Color(scheme.onError.value),
+        errorContainer: Color(scheme.errorContainer.value),
+        onErrorContainer: Color(scheme.onErrorContainer.value),
+        surface: Color(scheme.surface.value),
+        onSurface: Color(scheme.onSurface.value),
+        surfaceVariant: Color(scheme.surfaceVariant.value),
+        onSurfaceVariant: Color(scheme.onSurfaceVariant.value),
+        outline: Color(scheme.outline.value),
+        outlineVariant: Color(scheme.outlineVariant.value),
+        shadow: Color(scheme.shadow.value),
+        scrim: Color(scheme.scrim.value),
+        inverseSurface: Color(scheme.inverseSurface.value),
+        onInverseSurface: Color(scheme.onInverseSurface.value),
+        inversePrimary: Color(scheme.inversePrimary.value),
+        surfaceTint: Color(scheme.surfaceTint.value),
+      );
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Build base typography configuration.

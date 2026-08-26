@@ -116,24 +116,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     "Current \n ${currentSalah.displaySalahName}",
-                    style: GoogleFonts.juliusSansOne(
-                      fontSize: 28,
-                    ),
+                    style: GoogleFonts.juliusSansOne(fontSize: 28),
                   ),
                 ),
               ),
             ),
 
             // Display Start Time & Placeholder Timer
-            SliverToBoxAdapter(
-              child: _salahTime(context, currentSalahTime),
-            ),
+            SliverToBoxAdapter(child: _salahTime(context, currentSalahTime)),
 
             // List of All Prayer Times
             SliverFillRemaining(
               hasScrollBody: false,
               child: _upcomingSalah(context),
-            )
+            ),
           ],
         ),
       ),
@@ -196,10 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       decoration: BoxDecoration(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .onSecondary,
+        color: Theme.of(context).colorScheme.onSecondary,
         borderRadius: BorderRadius.circular(25),
       ),
       child: Center(
@@ -207,14 +200,8 @@ class _HomeScreenState extends State<HomeScreen> {
           time,
           style: GoogleFonts.montserrat(
             fontWeight: FontWeight.bold,
-            textStyle: Theme
-                .of(context)
-                .textTheme
-                .bodyMedium,
-            color: Theme
-                .of(context)
-                .colorScheme
-                .onSurface,
+            textStyle: Theme.of(context).textTheme.bodyMedium,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
@@ -243,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   salah,
                   _todayEntry?.getTime(salah) ?? '--:--',
                 ),
-              ]
+              ],
             ],
           ),
         ),
@@ -274,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontWeight: FontWeight.w500,
               color: theme.colorScheme.onSurfaceVariant,
             ),
-          )
+          ),
         ],
       ),
     );
