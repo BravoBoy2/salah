@@ -45,6 +45,11 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  // Inside AppDatabase class:
+  Future<void> clearAllData() async {
+    await delete(salahTimeTables).go();
+  }
+
   Stream<List<SalahTimeTable>> watchTodayPrayers(DateTime today) {
     // Use lowercase "s" for 'salahTimeTables' here
     return (select(salahTimeTables)

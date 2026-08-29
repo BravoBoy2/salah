@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:salah/models/time_format_mode.dart';
 import 'package:salah/screen/settings/settings_page.dart';
 import 'package:salah/screen/timetable_sliver.dart';
 
@@ -15,19 +16,38 @@ class NavigationLayout extends StatefulWidget {
 
 class _NavigationLayoutState extends State<NavigationLayout> {
   int _currentIndex = 0;
-  final AppDatabase dbInstance = AppDatabase();
+  late final AppDatabase _dbInstance;
+  late final List<Widget> _pages;
+  TimeFormatMode _currentMode = TimeFormatMode.system;
 
   // TODO: implement rest of the Navigation system
 
   @override
-  Widget build(BuildContext context) {
-    // Define pages inside build so they can adapt to the system settings cleanly
-    final List<Widget> pages = [
-      const HomeScreen(key: ValueKey('home_page')),
-      const SettingsPage(key: ValueKey('settings')),
-      TimetableSliverView(db: dbInstance),
+  void initState() {
+    super.initState();
+    _dbInstance = AppDatabase();
+
+    void handleTimeFormatChanged(TimeFormatMode newMode) {
+      setState(() {
+        _currentMode = newMode;
+      });
+    }
+
+    _pages = [
+      HomeScreen(key: const ValueKey('home_page'), currentMode: _currentMode),
+      SettingsPage(
+        key: const ValueKey('settings'),
+        currentMode: _currentMode,
+        onTimeFormatChanged: handleTimeFormatChanged,
+      ),
+      TimetableSliverView(db: _dbInstance),
       ImportTimeTable(key: ValueKey('Import Timetable')),
     ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Define pages inside build so they can adapt to the system settings cleanly
 
     return Scaffold(
       appBar: AppBar(
@@ -47,7 +67,7 @@ class _NavigationLayoutState extends State<NavigationLayout> {
 
       // IndexedStack fixes focus exceptions and keeps screen memory intact
       body: SafeArea(
-        child: IndexedStack(index: _currentIndex, children: pages),
+        child: IndexedStack(index: _currentIndex, children: _pages),
       ),
 
       bottomNavigationBar: NavigationBar(

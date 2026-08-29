@@ -1,11 +1,50 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:salah/Database/app_database.dart';
 import 'package:salah/Services/import_timetable_service.dart';
 
 class UnstructuredParser {
+  static String normalizeTo24Hour(String salahName, String rawTime) {
+    if (rawTime.trim().isEmpty) return '00:00';
+
+    final upper = rawTime.toUpperCase().trim();
+    final isPM = upper.contains('PM');
+    final isAM = upper.contains('AM');
+
+    // Match strictly the numbers (HH:mm)
+    final timeMatch = RegExp(r'(\d{1,2}):(\d{2})').firstMatch(rawTime);
+    if (timeMatch == null) return rawTime;
+
+    int hour = int.parse(timeMatch.group(1)!);
+    final minuteStr = timeMatch.group(2)!;
+
+    // 1. Explicit AM/PM tags
+    if (isPM && hour < 12) hour += 12;
+    if (isAM && hour == 12) hour = 0;
+
+    // 2. Fallback heuristic for standard prayer timelines when tags are absent
+    if (!isAM && !isPM && hour < 13) {
+      final name = salahName.toLowerCase();
+
+      if (name.contains('fajr')) {
+        if (hour == 12) hour = 0;
+      } else if (name.contains('dhuhr') || name.contains('zuhr')) {
+        if (hour < 11)
+          hour += 12; // e.g., 1:15 becomes 13:15, while 12:15 stays 12:15
+      } else if (name.contains('asr') ||
+          name.contains('maghrib') ||
+          name.contains('isha')) {
+        if (hour < 12) hour += 12; // Afternoon/evening times offset to PM
+      }
+    }
+
+    final formattedHour = hour.toString().padLeft(2, '0');
+    return '$formattedHour:$minuteStr';
+  }
+
   /// Parses CSV string content into a flat list of TimetableEntry items.
   static List<TimetableEntry> parseCSV(String rawCsv, DateTime selectedDate) {
     final List<TimetableEntry> entries = [];
@@ -29,7 +68,7 @@ class UnstructuredParser {
         continue; // Skip the metadata line or header line itself
       }
 
-      // 2. Parse prayer rows (Month, Date, Fajr, Sunrise, Duhr, Asr, Maghrib, Isha)
+      // 2. Parse prayer rows (Month, Date, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha)
       if (parts.length >= 8) {
         final monthStr = parts[0];
         final dayStr = parts[1];
@@ -44,7 +83,7 @@ class UnstructuredParser {
         final rowDate = DateTime(selectedDate.year, monthNum, dayNum);
 
         // Map individual prayers into TimetableEntry instances
-        // Column indices: 2=Fajr, 4=Duhr (skipping 3=Sunrise), 5=Asr, 6=Maghrib, 7=Isha
+        // Column indices: 2=Fajr, 4=Dhuhr (skipping 3=Sunrise), 5=Asr, 6=Maghrib, 7=Isha
         final map = {
           'Fajr': parts[2],
           'Dhuhr': parts[4],
@@ -97,7 +136,7 @@ class UnstructuredParser {
   }
 
   static final RegExp timeRegex = RegExp(
-    r'\b((?:[01]?\d|2[0-3]):[0-5]\d)\s*(AM|PM|am|pm)?\b',
+    r'\b(1[0-2]|0?[1-9]|2[0-3]):([0-5]\d)\s*(AM|PM|am|pm)?\b',
   );
 
   static final List<String> targetKeywords = [
@@ -184,23 +223,23 @@ class UnstructuredParser {
 
   static String _capitalize(String s) => s[0].toUpperCase() + s.substring(1);
 
-  static String _normalizeTime(String rawTime) {
-    rawTime = rawTime.toUpperCase().trim();
-    final isPM = rawTime.contains('PM');
-    final isAM = rawTime.contains('AM');
-
-    // final digitsOnly = rawTime.replaceAll(RegExp(r'[0-9:]'), '');
-    final timeParts = rawTime.split(':');
-    if (timeParts.length != 2) return rawTime;
-
-    int hour = int.parse(timeParts[0]);
-    final minutes = timeParts[1];
-
-    if (isPM && hour < 12) hour += 12;
-    if (isAM && hour == 12) hour = 0;
-
-    return '${hour.toString().padLeft(2, '0')}: $minutes';
-  }
+  // static String _normalizeTime(String rawTime) {
+  //   rawTime = rawTime.toUpperCase().trim();
+  //   final isPM = rawTime.contains('PM');
+  //   final isAM = rawTime.contains('AM');
+  //
+  //   // final digitsOnly = rawTime.replaceAll(RegExp(r'[0-9:]'), '');
+  //   final timeParts = rawTime.split(':');
+  //   if (timeParts.length != 2) return rawTime;
+  //
+  //   int hour = int.parse(timeParts[0]);
+  //   final minutes = timeParts[1];
+  //
+  //   if (isPM && hour < 12) hour += 12;
+  //   if (isAM && hour == 12) hour = 0;
+  //
+  //   return '${hour.toString().padLeft(2, '0')}: $minutes';
+  // }
 }
 
 class SpatialOcrParser {
@@ -211,7 +250,6 @@ class SpatialOcrParser {
     List<TimetableEntry> entries = [];
     List<OcrElement> elements = [];
 
-    // Extract every single word/block with its visual coordinates
     for (var block in recognizedText.blocks) {
       for (var line in block.lines) {
         final text = line.text.trim();
@@ -228,15 +266,14 @@ class SpatialOcrParser {
       }
     }
 
-    // 1. Group items that are on the same visual horizontal row (similar Y values)
-    // We sort vertically (Y) first
+    // Sort top-to-bottom
     elements.sort((a, b) => a.y.compareTo(b.y));
 
+    // Group into horizontal rows
     List<List<OcrElement>> rows = [];
     for (var element in elements) {
       bool placed = false;
       for (var row in rows) {
-        // If the element's Y-coordinate is within half a line-height of an existing row, group them
         if ((element.y - row.first.y).abs() < (element.height * 0.7)) {
           row.add(element);
           placed = true;
@@ -248,26 +285,46 @@ class SpatialOcrParser {
       }
     }
 
-    // 2. Sort each horizontal row from left to right (X values)
+    // Process each row left-to-right
     for (var row in rows) {
       row.sort((a, b) => a.x.compareTo(b.x));
 
-      // Now, evaluate the reconstructed rows
-      String rowText = row.map((e) => e.text).join(" ");
+      for (int i = 0; i < row.length; i++) {
+        final elementText = row[i].text.toLowerCase();
 
-      // Check if a prayer name exists on this reconstructed line
-      for (var keyword in UnstructuredParser.targetKeywords) {
-        if (rowText.toLowerCase().contains(keyword)) {
-          final matches = UnstructuredParser.timeRegex.allMatches(rowText);
-          if (matches.isNotEmpty) {
-            final matchedTime = matches.first.group(0)!;
-            entries.add(
-              TimetableEntry(
-                UnstructuredParser._capitalize(keyword),
-                targetDate,
-                UnstructuredParser._normalizeTime(matchedTime),
-              ),
+        for (var keyword in UnstructuredParser.targetKeywords) {
+          if (elementText.contains(keyword)) {
+            final capitalized = UnstructuredParser._capitalize(keyword);
+            String? matchedTime;
+
+            // 1. Check if the time string is in the same OCR box as the keyword
+            final sameBoxMatch = UnstructuredParser.timeRegex.firstMatch(
+              row[i].text,
             );
+            if (sameBoxMatch != null) {
+              matchedTime = sameBoxMatch.group(0);
+            } else {
+              // 2. Look forward in the same horizontal row for the immediate next time string
+              for (int j = i + 1; j < row.length; j++) {
+                final match = UnstructuredParser.timeRegex.firstMatch(
+                  row[j].text,
+                );
+                if (match != null) {
+                  matchedTime = match.group(0);
+                  break; // Stop at the start time column (avoiding Iqamah column)
+                }
+              }
+            }
+
+            if (matchedTime != null) {
+              final normalized = UnstructuredParser.normalizeTo24Hour(
+                capitalized,
+                matchedTime,
+              );
+
+              entries.add(TimetableEntry(capitalized, targetDate, normalized));
+            }
+            break;
           }
         }
       }
@@ -312,7 +369,7 @@ class TimeParser {
         }
       }
     } catch (e) {
-      print('Parser error: $e');
+      debugPrint('Parser error: $e');
     }
     return companions;
   }

@@ -16,8 +16,8 @@ class ImportTimetableService {
         ? pickedFile.name.split('.').last.toLowerCase()
         : '';
 
-    print("DEBUG: Picked file name: ${pickedFile.name}");
-    print("DEBUG: File extension detected: $extension");
+    debugPrint("DEBUG: Picked file name: ${pickedFile.name}");
+    debugPrint("DEBUG: File extension detected: $extension");
 
     final DateTime selectedDate = DateTime.now();
     List<TimetableEntry> results = [];
@@ -25,10 +25,12 @@ class ImportTimetableService {
     if (extension == 'csv' || extension == 'txt') {
       try {
         final String content = await _readFileContentAsString(pickedFile);
-        print("DEBUG: File raw content length: ${content.length} characters");
+        debugPrint(
+            "DEBUG: File raw content length: ${content.length} characters");
 
         if (extension == 'csv') {
-          print("DEBUG: Sending content to UnstructuredParser.parseCSV...");
+          debugPrint(
+              "DEBUG: Sending content to UnstructuredParser.parseCSV...");
           results = await compute(
             (String data) => UnstructuredParser.parseCSV(data, selectedDate),
             content,
@@ -41,21 +43,22 @@ class ImportTimetableService {
           );
         }
 
-        print("DEBUG: Parsing complete. Extracted ${results.length} entries.");
+        debugPrint(
+            "DEBUG: Parsing complete. Extracted ${results.length} entries.");
       } catch (e, stack) {
-        print("DEBUG ERROR during file reading or parsing: $e");
-        print("STACK TRACE: $stack");
+        debugPrint("DEBUG ERROR during file reading or parsing: $e");
+        debugPrint("STACK TRACE: $stack");
         return false;
       }
     }
 
     // Save extracted results to database
     if (results.isNotEmpty) {
-      print("DEBUG: Calling saveEntriesToDatabase...");
+      debugPrint("DEBUG: Calling saveEntriesToDatabase...");
       await saveEntriesToDatabase(results);
       return true;
     } else {
-      print("DEBUG: 'results' was empty. Nothing saved to database.");
+      debugPrint("DEBUG: 'results' was empty. Nothing saved to database.");
     }
 
     return false;
@@ -78,23 +81,24 @@ class ImportTimetableService {
 
     try {
       await db.saveTimetableEntries(entries);
-      print(
+      debugPrint(
         "Successfully saved ${entries.length} timetable entries to database.",
       );
 
       // --- DATABASE VERIFICATION LOGS ---
       final allEntries = await db.select(db.salahTimeTables).get();
-      print("================ DATABASE VERIFICATION ================");
-      print("Total records currently stored in SQLite: ${allEntries.length}");
-      print("First 5 stored entries:");
+      debugPrint("================ DATABASE VERIFICATION ================");
+      debugPrint(
+          "Total records currently stored in SQLite: ${allEntries.length}");
+      debugPrint("First 5 stored entries:");
       for (var entry in allEntries.take(5)) {
-        print(
+        debugPrint(
           " -> ${entry.salahName} | Date: ${entry.date} | Time: ${entry.timeString}",
         );
       }
-      print("=======================================================");
+      debugPrint("=======================================================");
     } catch (e) {
-      print("Failed to save entries to database: $e");
+      debugPrint("Failed to save entries to database: $e");
       rethrow;
     }
   }
@@ -115,13 +119,13 @@ class ImportTimetableService {
 
       // Verification log for raw string imports
       final totalCount = await db.select(db.salahTimeTables).get();
-      print(
+      debugPrint(
         "Import success. Current total entries in DB: ${totalCount.length}",
       );
 
       return true;
     } catch (e) {
-      print('Error importing timetable: $e');
+      debugPrint('Error importing timetable: $e');
       return false;
     }
   }
