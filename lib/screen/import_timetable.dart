@@ -94,7 +94,8 @@ class _ImportTimeTableState extends State<ImportTimeTable> {
 
     if (results.isNotEmpty) {
       await database.saveTimetableEntries(results);
-      print('Successfully wrote ${results.length} rows to the local database!');
+      debugPrint(
+          'Successfully wrote ${results.length} rows to the local database!');
     }
   }
 

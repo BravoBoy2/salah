@@ -32,8 +32,9 @@ class UnstructuredParser {
       if (name.contains('fajr')) {
         if (hour == 12) hour = 0;
       } else if (name.contains('dhuhr') || name.contains('zuhr')) {
-        if (hour < 11)
+        if (hour < 11) {
           hour += 12; // e.g., 1:15 becomes 13:15, while 12:15 stays 12:15
+        }
       } else if (name.contains('asr') ||
           name.contains('maghrib') ||
           name.contains('isha')) {

@@ -1,7 +1,6 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:salah/screen/adaptive_screens.dart';
-import 'package:salah/theme/theme.dart';
 
 void main() {
   runApp(const SalahApp());
@@ -17,12 +16,15 @@ class SalahApp extends StatelessWidget {
         return MaterialApp(
           title: 'Salah',
           themeMode: ThemeMode.system,
-          theme: SalahTheme.light(
-            SalahTheme.convertDynamicColorScheme(lightDynamic),
+          theme: ThemeData(
+            useMaterial3: true,
+
           ),
-          darkTheme: SalahTheme.dark(
-            SalahTheme.convertDynamicColorScheme(darkDynamic),
+
+          darkTheme: ThemeData(
+            useMaterial3: true,
           ),
+
           home: AdaptiveScreens(),
         );
       },
